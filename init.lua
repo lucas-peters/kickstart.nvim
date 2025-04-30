@@ -190,7 +190,10 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
--- [[ Basic Autocommands ]]
+--
+--vim.keymap.set('n', '<leader>vb', function()
+--  vim.cmd('normal! ' .. vim.api.nvim_replace_termcodes('<C-v>', true, true, true))
+--end, { desc = 'Visual Block mode' }) -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
 -- Highlight when yanking (copying) text
@@ -270,6 +273,10 @@ require('lazy').setup({
   -- Then, because we use the `config` key, the configuration only runs
   -- after the plugin has been loaded:
   --  config = function() ... end
+  {
+    'brenton-leighton/multiple-cursors.nvim',
+    opts = {}, -- or configure with your preferred options
+  },
 
   { -- Useful plugin to show you pending keybinds.
     'folke/which-key.nvim',
@@ -323,6 +330,12 @@ require('lazy').setup({
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       },
     },
+  },
+  -- In your plugins configuration
+  {
+    'ThePrimeagen/harpoon',
+    branch = 'harpoon2',
+    dependencies = { 'nvim-lua/plenary.nvim' },
   },
 
   -- NOTE: Plugins can specify dependencies.
@@ -615,9 +628,22 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {
+          cmd = {
+            'clangd',
+            '--background-index', -- Index project code in the background
+            '--suggest-missing-includes', -- Suggests headers you might need to include
+            '--clang-tidy', -- Enables clang-tidy diagnostics
+            '--header-insertion=iwyu', -- Adds headers following "include what you use" principle
+            '--completion-style=detailed', -- More detailed completion items
+            '--pch-storage=memory', -- Stores precompiled headers in memory for faster processing
+            '--function-arg-placeholders=false', -- Simpler completions for function calls
+            '--log=error', -- Logging level: 'verbose', 'info', 'error'
+            '--ranking-model=decision_forest', -- Ranking model for code completion
+          },
+        },
         -- gopls = {},
-        -- pyright = {},
+        pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -968,3 +994,106 @@ require('lazy').setup({
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+vim.opt.tabstop = 4
+vim.opt.softtabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+vim.opt.relativenumber = true
+vim.api.nvim_set_keymap('i', '<CapsLock>', '<Esc>', { noremap = true, silent = true })
+
+local harpoon = require 'harpoon'
+
+-- REQUIRED
+harpoon:setup()
+-- REQUIRED
+
+vim.keymap.set('n', '<leader>a', function()
+  harpoon:list():add()
+end, { desc = 'Add file to harpoon' })
+vim.keymap.set('n', '<C-e>', function()
+  harpoon.ui:toggle_quick_menu(harpoon:list())
+end)
+
+vim.keymap.set('n', '<C-1>', function()
+  harpoon:list():select(1)
+end)
+vim.keymap.set('n', '<C-2>', function()
+  harpoon:list():select(2)
+end)
+vim.keymap.set('n', '<C-3>', function()
+  harpoon:list():select(3)
+end)
+vim.keymap.set('n', '<C-4>', function()
+  harpoon:list():select(4)
+end)
+vim.keymap.set('n', '<C-5>', function()
+  harpoon:list():select(5)
+end)
+vim.keymap.set('n', '<C-6>', function()
+  harpoon:list():select(6)
+end)
+vim.keymap.set('n', '<C-7>', function()
+  harpoon:list():select(7)
+end)
+vim.keymap.set('n', '<C-8>', function()
+  harpoon:list():select(8)
+end)
+
+-- Toggle previous & next buffers stored within Harpoon list
+vim.keymap.set('n', '<C-S-P>', function()
+  harpoon:list():prev()
+end)
+vim.keymap.set('n', '<C-S-N>', function()
+  harpoon:list():next()
+end)
+vim.keymap.set('n', '}', '}zz')
+vim.keymap.set('n', '{', '{zz')
+vim.keymap.set('n', '<C-u>', '<C-u>zz')
+vim.keymap.set('n', '<C-d>', '<C-d>zz')
+
+-- Remap the [ and ] jump commands to also center the screen
+local jump_keys = {
+  -- Section jumps
+  '[[',
+  ']]',
+  -- Paragraph jumps
+  '[{',
+  ']}',
+  -- Class/function jumps
+  '[m',
+  ']m',
+  '[M',
+  ']M',
+  -- Git conflict jumps
+  '[c',
+  ']c',
+  -- Diff jumps
+  '[n',
+  ']n',
+  -- Tag jumps
+  '[t',
+  ']t',
+  -- Error/quickfix jumps
+  '[q',
+  ']q',
+  '[Q',
+  ']Q',
+  '[l',
+  ']l',
+  -- Cursor history jumps
+  '[o',
+  ']o',
+  '[i',
+  ']i',
+  -- Other common jump commands
+  '[z',
+  ']z',
+  '[s',
+  ']s',
+  '[d',
+  ']d',
+}
+
+for _, key in ipairs(jump_keys) do
+  vim.keymap.set('n', key, key .. 'zz', { noremap = false })
+end
